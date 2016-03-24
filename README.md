@@ -1,6 +1,6 @@
-# NodeJS 
+# NodeJS Course
 
-**Requirements:**
+### Requirements:
 
 - A personal computer (Mac OSX preferred)
 - Understanding of HTML / CSS
@@ -16,3 +16,31 @@ Run these commands to make it work:
 
 [MongoDB Setup with Cloud9](https://docs.c9.io/docs/setting-up-mongodb)
 
+### Topics covered:-	NodeJS-	NPM-	Debugging NodeJS-	Express-	Webpack-	ES2015-	Jade-	MongoDB & Mongoose-	OAuth with Facebook and Twitter-	JWTs (JSON web tokens)-	TDD (test-driven development) with Mocha & Chai-	Callbacks, Promises, and Emitters-	Socket.io### Set up your work environment
+
+Follow the guidelines here to setup your Mac OSX envirnment for programming:
+
+[Perfect OSX NodeJS setup](https://www.stanleycyang.com/tutorials/the-perfect-mac-os-x-setup-for-web-development)
+
+## NodeJS: An Introduction
+
+## Setting up Express
+
+## Front-End
+
+## Bundler
+
+## Back-End
+
+## OAuth
+
+## Authentication
+
+## Real-time
+
+## Conclusion
+
+Discussion: 
+
+- ReactJS vs. AngularJS
+- NodeJS frameworks: Express / Hapi / Koa / Sails
