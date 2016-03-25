@@ -1,0 +1,20 @@
+{
+  "name": "tshirt_shop",
+  "main": "index.js",
+  "version": "0.0.0",
+  "homepage": "https://github.com/js-react/nodejs_course",
+  "authors": [
+    "stanleycyang <stanley@stanleycyang.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "v4.0.0-alpha.2"
+  }
+}

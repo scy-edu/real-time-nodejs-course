@@ -417,9 +417,83 @@ You can step through the code, and examine the call stack and the variables to u
 
 ## Front-End
 
+### Installing Bower
 
+```js
+$ bower init
+$ echo '{"directory": "static/vendor/"}' >> .bowerrc
+$ bower install bootstrap#v4.0.0-alpha.2 -S
+```
 
 ## Bundler
+
+We're going to use [webpack](https://webpack.github.io/) to bundle our assets
+
+In your terminal:
+
+```bash
+$ npm i -S webpack style-loader css-loader
+$ touch webpack.config.js
+```
+
+Let's set up your webpack:
+
+```js
+module.exports = {
+  entry: "./client/index.js",
+    output: {
+        path: __dirname,
+        filename: "./static/bundle.js"
+    },
+    module: {
+        loaders: [
+            { test: /\.css$/, loader: "style!css" }
+        ]
+    }
+};
+```
+
+Create a client folder with all your files:
+
+```bash
+$ mkdir -p client/styles
+$ touch client/index.js client/styles/index.css
+```
+
+Try some basic styling:
+
+```css
+body {
+	background: red;
+	font-size: 1.3rem;
+}
+```
+
+Require the code into your webpack entry point:
+
+```js
+// Bring in the styling
+require('./styles/index.css');
+document.write('It works.');
+```
+
+You can continue to require the files as you go along!
+
+Include your code into `index.jade`:
+
+```jade
+...
+script(src='bundle.js')
+...
+```
+
+To keep refreshing your updates as they come through:
+
+```bash
+$ webpack --progress --colors --watch
+```
+
+Your webpack bundler is all setup!
 
 ## Back-End
 
