@@ -460,7 +460,7 @@ $ mkdir -p client/styles
 $ touch client/index.js client/styles/index.css
 ```
 
-Try some basic styling:
+Try some basic styling (`client/styles/index.css`):
 
 ```css
 body {
@@ -469,7 +469,7 @@ body {
 }
 ```
 
-Require the code into your webpack entry point:
+Require the code into your webpack entry point (`client/index.js`):
 
 ```js
 // Bring in the styling
@@ -496,6 +496,88 @@ $ webpack --progress --colors --watch
 Your webpack bundler is all setup!
 
 ## Back-End
+
+### MongoDB
+
+MongoDB was create by 10gen, who wanted to make an open-sourced scalable database for hu'mongo'us data. It's written in C++.
+
+Check out their website [here](https://www.mongodb.org/).
+
+### Features of MongoDB
+
+- Key-value storage
+- Binary JSON (BSON, pronounced Bi-Son)
+- Components: database, collections, and documents
+- Databases have many collections
+- Collections have many documents
+- Documents contain the key-value pairs
+- Documents are dynamic. They do not beholden to the same sets of fields or structures
+
+### For SQL users
+
+- Database = Database
+- Table = Collection
+- Row = Document
+- Column = Field
+- Joins = Embedded documents
+
+### Limits
+
+- BSON document limit is 16 megabytes. 
+- It supports no more than 100 levels of nesting. 
+- A collection can have no more than 64 indexes
+
+### Thought Process
+
+You should always default to thinking in embedding first when doing MongoDB. 
+
+If the data will exceed your 16MB limit per document, then reference it!
+
+### Referencing
+
+You can either a) reference the ID in an array in the document or b) reference the parent ID in the child.
+
+Case B is used when the data is enormous.
+
+## Mongo Shell
+
+It's easy to access the shell!
+
+In your terminal:
+
+```bash
+$ mongod
+$ mongo
+```
+
+### Embedding with Mongo
+
+```bash
+$ db.people.insert({name: 'Stanley Yang'})
+$ var stanley = db.people.findOne(INSERT_OBJECTID)
+$ stanley.phoneNumbers = [
+	636-263-1234,
+	123-345-6554,
+	922-233-1234
+]
+$ db.people.remove(INSERT_OBJECTID)
+```
+
+### Referencing with Mongo
+
+```bash
+$ db.person.insert({
+	name: 'Stanley Yang',
+	age: 21
+})
+$ db.phoneBook.insert({
+	people: [
+		user1._id
+	]
+})
+$ db.phoneBook.find()
+```
+
 
 ## OAuth
 
