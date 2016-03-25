@@ -106,7 +106,7 @@ JavaScript in nature is non-blocking. It has solutions built into it's core:
 - Emitters
 - Promises
 
-Let's watch this video: <video src='https://www.youtube.com/watch?v=8aGhZQkoFbQ' />
+[Good event loop reference](https://www.youtube.com/watch?v=8aGhZQkoFbQ)
 
 JavaScript run-time can only do one thing at a time. It uses WebAPIs (browser) and C++ APIs (NodeJS) to execute code concurrently.
 
@@ -153,9 +153,227 @@ $ npm search [package name]
 
 Note that this runs slowly on the first query.
 
+### Creating our first module: CALCJS
 
+```bash
+$ mkdir calcjs
+$ cd calcjs
+$ npm init
+```
+
+Go through the set of instructions. Open up your `package.json`
+
+```js
+{
+  "name": "calcjs",
+  "version": "1.0.0",
+  "description": "The first module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Stanley C Yang <stanley@stanleycyang.com> (http://www.stanleycyang.com)",
+  "license": "ISC"
+}
+```
+
+Let's install our first module~
+
+```js
+$ npm install -S mathjs
+```
+
+Our module will look like this: 
+
+```js
+'use strict'
+
+// Import dependencies
+const math = require('mathjs')
+
+/*
+ * CALCJS. LOVE OUR MODULE!!!
+ */
+
+exports.add = function (num1, num2) {
+  return math.eval(num1 + num2);
+}
+
+exports.subtract = function (num1, num2) {
+  return math.eval(num1 - num2);
+}
+
+exports.multiply = function (num1, num2) {
+  return math.eval(num1 * num2);
+}
+
+exports.divide =  function (num1, num2) {
+  return math.eval(num1 / num2);
+}
+
+// Students will perform this part
+
+exports.round = function (num1, roundTo) {
+  return math.round(num1, roundTo);
+}
+
+exports.sqrt = function (num) {
+  return math.sqrt(num);
+}
+
+```
+
+In a file called `calculate.js`:
+
+```js
+'use strict'
+
+const math = require('./index.js')
+
+console.log(math.add(12,5));
+console.log(math.subtract(12,5));
+console.log(math.multiply(12,5));
+console.log(math.divide(12,5));
+console.log(math.round(10.321321, 2));
+console.log(math.sqrt(500));
+```
+
+Move `calculate.js` to a demo folder. Then go into the root of calcjs and run **npm link**. Then go into the demo folder and run **npm link calcjs**
+
+In `calculate.js`:
+
+```js
+'use strict'
+
+const math = require('calcjs')
+
+console.log(math.add(12,5));
+console.log(math.subtract(12,5));
+console.log(math.multiply(12,5));
+console.log(math.divide(12,5));
+console.log(math.round(10.321321, 2));
+console.log(math.sqrt(500));
+```
+
+You have written your first module! To publish it to npm, just create an account and run npm publish.
 
 ## Setting up Express
+
+Begin our first express app by starting in our terminal:
+
+```bash
+$ mkdir tshirt_shop
+$ cd tshirt_shop
+$ npm init -f
+$ npm i -S body-parser cookie-parser cors debug express jade mongoose morgan
+```
+
+Let's create our server (`bin/www`):
+
+```js
+#! usr/bin/env node
+'use strict'
+
+const http = require('http');
+const PORT = 3000;
+const app = require('../index.js');
+
+// Create HTTP server
+const server = http.createServer(app);
+server.listen(PORT);
+server.on('listening', onListening);
+
+// To listen in
+function onListening() {
+  const address = server.address().port
+  console.log(`Listening on port ${address}`);
+}
+```
+
+Add the middleware in `index.js`:
+
+```js
+const express = require('express');
+const path = require('path');
+const router = express.Router();
+
+
+// Initialize the app
+const app = express();
+
+// Add middleware
+
+// view engine setup to use Jade
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'jade');
+
+// Add in logger
+app.use(require('morgan')('dev'));
+
+// Add in parser
+app.use(require('body-parser').json());
+app.use(require('body-parser').urlencoded({ extended: false }));
+
+// Cookie parsing
+app.use(require('cookie-parser')());
+
+// Create a static folder directory
+app.use(express.static(path.join(__dirname, 'static')));
+
+// Create our first route
+app.use(router.get('/', (req, res, next) => {
+  res.render('index', {
+    title: 'First app'
+  });
+}));
+
+app.use((req, res, next) => {
+  var err = new Error('Not Found');
+  err.status = 404;
+  next(err);
+});
+
+app.use((err, req, res, next) => {
+  res.status(err.status || 500);
+  res.render('error', {
+    message: err.message,
+    error: {}
+  });
+});
+
+module.exports = app
+```
+
+Create the views (`views/layout.jade`):
+
+```jade
+doctype html
+html
+  head
+    title= title
+  body
+    block content
+```
+
+`views/index.jade`:
+
+```jade
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+```
+
+`views/error.jade`:
+
+```jade
+extends layout
+
+block content
+  h1= message
+  h2= error.status
+```
 
 ## Front-End
 

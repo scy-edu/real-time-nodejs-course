@@ -1,0 +1,17 @@
+#! usr/bin/env node
+'use strict'
+
+const http = require('http');
+const PORT = 3000;
+const app = require('../index.js');
+
+// Create HTTP server
+const server = http.createServer(app);
+server.listen(PORT);
+server.on('listening', onListening);
+
+// To listen in
+function onListening() {
+  const address = server.address().port
+  console.log(`Listening on port ${address}`);
+}
