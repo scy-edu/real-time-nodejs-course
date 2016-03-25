@@ -375,7 +375,33 @@ block content
   h2= error.status
 ```
 
+### Debugging
+
+We're going to debug with **[node-inspector](https://github.com/node-inspector/node-inspector)**
+
+**Install:**
+
+```bash
+$ npm install -g node-inspector
+```
+
+**To run it:**
+
+```bash
+$ node --debug bin/www
+
+to start with an breakpoint immediately:
+
+$ node --debug-brk bin/www
+```
+
+This gives a clean interface (Chrome debugger) to examine the code. If you use Chrome for your front-end debugging, you'll be right at home!
+
+You can step through the code, and examine the call stack and the variables to understand what is going on.
+
 ## Front-End
+
+
 
 ## Bundler
 
