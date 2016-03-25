@@ -375,6 +375,22 @@ block content
   h2= error.status
 ```
 
+### Creating an API
+
+In `index.js`
+
+```js
+app.use(router.get('/api/courses', (req, res, next) => {
+	res.json({
+		name: 'Stanley',
+		course: 'NodeJS',
+		description: 'This is going to be fun'
+	});
+}));
+```
+
+Navigate to http://localhost:3000/api/courses and you'll see that we have created an API!
+
 ### Debugging
 
 We're going to debug with **[node-inspector](https://github.com/node-inspector/node-inspector)**

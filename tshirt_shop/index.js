@@ -32,6 +32,14 @@ app.use(router.get('/', (req, res, next) => {
   });
 }));
 
+app.use(router.get('/api/courses', (req, res, next) => {
+  res.json({
+    name: 'Stanley',
+    course: 'NodeJS',
+    description: 'This is going to be fun guys'
+  })
+}));
+
 app.use((req, res, next) => {
   var err = new Error('Not Found');
   err.status = 404;
