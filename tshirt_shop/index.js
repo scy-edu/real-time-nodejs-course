@@ -1,7 +1,34 @@
 const express = require('express');
 const path = require('path');
+const mongoose = require('mongoose')
 const router = express.Router();
 
+// Connect the database
+mongoose.connect('mongodb://localhost:27017/tshirt');
+
+// Create User Schema
+const User = mongoose.model('User', new mongoose.Schema({
+  name: String
+}));
+
+// Create Comment Schema
+const Comment = mongoose.model('Comment', new mongoose.Schema({
+  content: String,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
+}));
+
+// Tshirt schema
+const Tshirt = mongoose.model('Tshirt', new mongoose.Schema({
+  name: String,
+  comments: [Comment.schema],
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
+}));
 
 // Initialize the app
 const app = express();
@@ -26,19 +53,81 @@ app.use(require('cookie-parser')());
 app.use(express.static(path.join(__dirname, 'static')));
 
 // Create our first route
-app.use(router.get('/', (req, res, next) => {
+router.get('/', (req, res, next) => {
   res.render('index', {
     title: 'First app'
   });
-}));
+});
 
-app.use(router.get('/api/courses', (req, res, next) => {
-  res.json({
-    name: 'Stanley',
-    course: 'NodeJS',
-    description: 'This is going to be fun guys'
-  })
-}));
+// Get all the shirts
+router.get('/api/tshirts', (req, res, next) => {
+  return Promise.resolve(
+    Tshirt.find()
+      .populate('comments.user')
+      .exec()
+  ).then((tshirts) => {
+    return res.send(tshirts);
+  }).catch((err) => {
+    return res.status(400).send(err);
+  });
+});
+
+router.post('/api/tshirts', (req, res, next) => {
+  // New tshirt
+  var tshirt = new Tshirt();
+
+  // Add the data in
+  tshirt.name = req.body.name;
+  tshirt.user = req.body.user;
+
+  return new Promise((resolve, reject) => {
+    return tshirt.save((err, tshirt) => {
+      if (err) reject(err);
+      resolve(tshirt);
+    });
+  }).then((tshirt) => {
+    return res.send(tshirt);
+  }).catch((err) => {
+    return res.status(400).send(err);
+  });
+});
+
+router.post('/api/users', (req, res, next) => {
+  var user = new User();
+  user.name = req.body.name;
+
+  return Promise.resolve(
+    user.save()
+  ).then((user) => {
+    return res.send(user);
+  }).catch((err) => {
+    return res.status(400).send(err);
+  });
+});
+
+router.post('/api/tshirts/:tshirt_id/comments', (req, res, next) => {
+  return Promise.resolve(
+    Tshirt.findOne({
+      _id: req.params.tshirt_id
+    }).exec()
+  ).then((tshirt) => {
+    tshirt.comments.push({
+      content: req.body.content,
+      user: req.body.user
+    });
+
+    return Promise.resolve(
+      tshirt.save()
+    ).then((tshirt) => {
+      return res.send(tshirt);
+    }).catch((err) => {
+      return res.status(400).send(err);
+    });
+  });
+});
+
+// Add in the router
+app.use('/', router);
 
 app.use((req, res, next) => {
   var err = new Error('Not Found');
