@@ -1,0 +1,18 @@
+{
+  "name": "calcjs",
+  "version": "1.0.0",
+  "description": "Calc module",
+  "main": "index.js",
+  "dependencies": {
+    "mathjs": "^3.1.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "calculate"
+  ],
+  "author": "Stanley C Yang <stanley@stanleycyang.com> (http://www.stanleycyang.com)",
+  "license": "ISC"
+}
