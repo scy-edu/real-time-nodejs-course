@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  h1= title
+  h2= message
+  form(action='/login' method='post')
+    input(type='text' name='email' placeholder='Email')
+    input(type='password' name='password' placeholder='Password')
+    button(type='submit') Login
+
+  p Don't have an account?
+    a(href='/signup') Signup
+  a(href='/') Home

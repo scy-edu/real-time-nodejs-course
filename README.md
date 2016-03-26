@@ -701,7 +701,6 @@ app.use('/', router);
 $ npm i -SD mocha chai request supertest
 $ mkdir test
 $ touch test/index.js test/mocha.opts
-$ 
 ```
 
 In `mocha.opts`:
@@ -801,7 +800,9 @@ We've finished testing our User model!
 
 ## OAuth & Authentication
 
-
+```bash
+$ npm i -S express-session passport-local passport-facebook bcrypt-nodejs
+```
 
 ## Real-time
 
