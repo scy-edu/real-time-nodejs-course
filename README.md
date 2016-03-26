@@ -695,9 +695,113 @@ router.post('/api/tshirts/:tshirt_id/comments', (req, res, next) => {
 app.use('/', router);
 ```
 
-## OAuth
+### TDD
 
-## Authentication
+```bash
+$ npm i -SD mocha chai request supertest
+$ mkdir test
+$ touch test/index.js test/mocha.opts
+$ 
+```
+
+In `mocha.opts`:
+
+```js
+--reporter spec
+--bail
+--timeout 5m
+```
+
+In `test/server/api/models/User.js`:
+
+```js
+use strict'
+
+const mongoose = require('mongoose')
+const expect = require('chai').expect
+
+const User = mongoose.model('User');
+
+describe('User', () => {
+  var user
+
+  // Setup
+  before(() => {
+    user = new User({
+      name: 'Stanley Yang'
+    });
+  })
+
+  describe('attributes', () => {
+
+    it('created an user object', () => {
+      expect(typeof person).to.be.an.object
+    });
+
+    it('should have a String for name', () => {
+      expect(user.name).to.be.a('string')
+    });
+
+  });
+
+  describe('#save', () => {
+
+    it('should save without problems', (done) => {
+      user.save(done);
+    });
+
+    it('should GET the user', (done) => {
+      User.findById(user._id, (err, _user) => {
+        expect(user._id.toString()).to.equal(_user.id);
+        done();
+      });
+    });
+
+  });
+
+  describe('#validate', () => {
+    it('should persist the name', (done) => {
+      User.findById(user._id, (err, _user) => {
+      expect(err).to.be.a('null');
+        expect(_user).to.be.an('object');
+        expect(_user.name).to.be.a('string');
+        done();
+      });
+    });
+  });
+
+
+
+  // Cleanup
+  after((done) => {
+    User.remove({
+      _id: {
+        $in: [
+          user._id
+        ]
+      }
+    }).exec(done);
+  })
+
+});
+```
+In our `test/index.js`, we're going to create a single entry point for our tests:
+
+```js
+'use strict'
+
+require('../index.js');
+require('./server/api/models/index.js');
+
+```
+
+To test it, run `test/index.js`!
+
+We've finished testing our User model!
+
+## OAuth & Authentication
+
+
 
 ## Real-time
 
