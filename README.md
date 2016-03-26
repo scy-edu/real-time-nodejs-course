@@ -801,7 +801,7 @@ We've finished testing our User model!
 ## OAuth & Authentication
 
 ```bash
-$ npm i -S express-session passport-local passport-facebook bcrypt-nodejs
+$ npm i -S express-session passport-local passport-facebook bcrypt-nodejs dotenv
 ```
 
 ## Real-time

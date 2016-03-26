@@ -1,3 +1,6 @@
+// Load ENV variables
+require('dotenv').config()
+
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose')
@@ -5,6 +8,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt-nodejs');
 const methodOverride = require('method-override');
 const LocalStrategy = require('passport-local').Strategy;
+const FacebookStrategy = require('passport-facebook').Strategy;
 const passport = require('passport');
 const session = require('express-session');
 
@@ -20,7 +24,12 @@ function isLoggedIn(req, res, next) {
 const UserSchema = new mongoose.Schema({
   name: String,
   email: String,
-  password: String
+  password: String,
+  facebook: {
+    id: String,
+    token: String,
+    name: String,
+  }
 });
 
 UserSchema.methods.generateHash = function(password) {
@@ -102,6 +111,32 @@ app.use(passport.session());
 
 // Flash
 app.use(require('connect-flash')());
+
+passport.use(new FacebookStrategy({
+  clientID: process.env.FACEBOOK_CLIENT_ID,
+  clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+  callbackURL: '/auth/facebook/callback'
+}, (token, refreshToken, profile, done) => {
+  User.findOne({
+    'facebook.id': profile.id
+  }, function (err, user) {
+    if (err) return done(err);
+    if (user) {
+      return done(null, user);
+    } else {
+      var newUser = new User();
+
+      newUser.facebook.id = profile.id;
+      newUser.facebook.token = token;
+      newUser.facebook.name = `${profile.name.givenName} ${profile.name.familyName}`,
+
+      newUser.save((err) => {
+        if (err) throw err;
+        return done(null, newUser);
+      });
+    }
+  });
+}));
 
 // Add in the passport local strategy
 passport.use('local-signup', new LocalStrategy({
@@ -200,6 +235,13 @@ router.get('/signup', (req, res, next) => {
     message: req.flash('signupMessage')
   });
 });
+
+router.get('/auth/facebook', passport.authenticate('facebook', { scope: 'email' }));
+
+router.get('/auth/facebook/callback', passport.authenticate('facebook', {
+  successRedirect: '/authenticated',
+  failureRedirect: '/'
+}));
 
 router.get('/authenticated', isLoggedIn, (req, res, next) => {
   res.render('authenticated', {
