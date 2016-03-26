@@ -804,6 +804,321 @@ We've finished testing our User model!
 $ npm i -S express-session passport-local passport-facebook bcrypt-nodejs dotenv
 ```
 
+Add this lines to the top of our `index.js`:
+
+```js
+const bcrypt = require('bcrypt-nodejs');
+const methodOverride = require('method-override');
+const LocalStrategy = require('passport-local').Strategy;
+const passport = require('passport');
+const session = require('express-session');
+
+...
+
+// Middleware for when we're logged in
+function isLoggedIn(req, res, next) {
+  if (req.isAuthenticated()) return next();
+  res.redirect('/');
+}
+
+// Refactor User Schema
+const UserSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  password: String,
+  facebook: {
+  	id: String,
+  	name: String,
+  	token: String
+  }
+});
+
+UserSchema.methods.generateHash = function(password) {
+  return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
+};
+
+UserSchema.methods.validPassword = function(password) {
+  return bcrypt.compareSync(password, this.password);
+};
+
+const User = mongoose.model('User', UserSchema);
+```
+
+We're going to need some middleware to make our passport functional (`index.js`):
+
+
+```js
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((obj, done) => {
+  done(null, obj);
+});
+
+app.use(session({
+  secret: 'stanley',
+  saveUninitialized: false,
+  resave: false
+}));
+
+// Initialize passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Flash
+app.use(require('connect-flash')());
+```
+
+Beneath that, add the code to tie our backend with the authentication:
+
+```js
+// Add in the passport local strategy
+passport.use('local-signup', new LocalStrategy({
+      // by default, local strategy uses username and password, we will override with email
+      usernameField : 'email',
+      passwordField : 'password',
+      passReqToCallback : true // allows us to pass back the entire request to the callback
+  },
+  function(req, email, password, done) {
+
+      // asynchronous
+      // User.findOne wont fire unless data is sent back
+      process.nextTick(function() {
+
+      // find a user whose email is the same as the forms email
+      // we are checking to see if the user trying to login already exists
+      User.findOne({ 'email' :  email }, function(err, user) {
+          // if there are any errors, return the error
+          if (err)
+              return done(err);
+
+          // check to see if theres already a user with that email
+          if (user) {
+              return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
+          } else {
+
+              // if there is no user with that email
+              // create the user
+              var newUser            = new User();
+
+              // set the user's local credentials
+              newUser.email    = email;
+              newUser.password = newUser.generateHash(password);
+
+              // save the user
+              newUser.save(function(err) {
+                  if (err)
+                      throw err;
+                  return done(null, newUser);
+              });
+          }
+
+      });
+    });
+}));
+
+// Handling login
+passport.use('local-login', new LocalStrategy({
+    // by default, local strategy uses username and password, we will override with email
+    usernameField : 'email',
+    passwordField : 'password',
+    passReqToCallback : true // allows us to pass back the entire request to the callback
+},
+function(req, email, password, done) { // callback with email and password from our form
+
+    // find a user whose email is the same as the forms email
+    // we are checking to see if the user trying to login already exists
+    User.findOne({ 'email' :  email }, function(err, user) {
+        // if there are any errors, return the error before anything else
+        if (err)
+            return done(err);
+
+        // if no user is found, return the message
+        if (!user)
+            return done(null, false, req.flash('loginMessage', 'No user found.')); // req.flash is the way to set flashdata using connect-flash
+
+        // if the user is found but the password is wrong
+        if (!user.validPassword(password))
+            return done(null, false, req.flash('loginMessage', 'Wrong password.')); // create the loginMessage and save it to session as flashdata
+
+        // all is well, return successful user
+        return done(null, user);
+    });
+
+}));
+
+// Page for login
+router.get('/login', (req, res, next) => {
+  res.render('login', {
+    title: 'Login',
+    message: req.flash('loginMessage')
+  });
+});
+
+// Page for signup
+router.get('/signup', (req, res, next) => {
+  res.render('signup', {
+    title: 'Signup',
+    message: req.flash('signupMessage')
+  });
+});
+
+router.get('/authenticated', isLoggedIn, (req, res, next) => {
+  res.render('authenticated', {
+    title: 'Logged in'
+  });
+});
+
+...
+
+app.post('/signup', passport.authenticate('local-signup', {
+  successRedirect: '/authenticated',
+  failureRedirect: '/signup',
+  failureFlash: true // All flash messages
+}));
+
+// Route for login
+app.post('/login', passport.authenticate('local-login', {
+  successRedirect: '/authenticated',
+  failureRedirect: '/login',
+  failureFlash: true
+}));
+```
+
+Create our views:
+
+`views/authenticated.jade`:
+
+```js
+extends layout
+
+block content
+  h1= title
+  a(href='/logout') Logout
+```
+
+`views/login.jade`:
+
+```js
+extends layout
+
+block content
+  h1= title
+  h2= message
+  form(action='/login' method='post')
+    input(type='text' name='email' placeholder='Email')
+    input(type='password' name='password' placeholder='Password')
+    button(type='submit') Login
+
+  p Don't have an account?
+    a(href='/signup') Signup
+  a(href='/') Home
+```
+
+`views/signup.jade`:
+
+```js
+extends layout
+
+block content
+  h1= title
+  h2= message
+  form(action='/signup' method='post')
+    input(type='text' name='email' placeholder='Email')
+    input(type='password' name='password' placeholder='Password')
+    button(type='submit') Signup
+
+  p Already have an account?
+    a(href='/login') Login
+  a(href='/') Home
+```
+
+Our local authentication should work at this point! Try it out!
+
+### Facebook Authentication
+
+To make Facebook authentication work we're going to need the `dotenv` module to hide our private keys.
+
+In your terminal:
+
+```js
+$ npm i -S dotenv passport-facebook
+$ touch .env
+```
+
+In the `.env` file, we can store everything we don't want to get pushed in Github. Store your Facebook keys in:
+
+```js
+FACEBOOK_CLIENT_ID=YOURCLIENTID
+FACEBOOK_CLIENT_SECRET=YOURCLIENTSECRET
+```
+
+At the very top of our `index.js`, add this line of code to load the environmental variables:
+
+```js
+require('dotenv').config();
+
+...
+
+// Bring in Facebook Strategy
+const FacebookStrategy = require('passport-facebook').Strategy
+```
+Now below the place where you brought in `connect-flash`, put this snippet in `index.js`:
+
+```js
+
+passport.use(new FacebookStrategy({
+  clientID: process.env.FACEBOOK_CLIENT_ID,
+  clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+  callbackURL: '/auth/facebook/callback'
+}, (token, refreshToken, profile, done) => {
+  User.findOne({
+    'facebook.id': profile.id
+  }, function (err, user) {
+    if (err) return done(err);
+    if (user) {
+      return done(null, user);
+    } else {
+      var newUser = new User();
+
+      newUser.facebook.id = profile.id;
+      newUser.facebook.token = token;
+      newUser.facebook.name = `${profile.name.givenName} ${profile.name.familyName}`,
+
+      newUser.save((err) => {
+        if (err) throw err;
+        return done(null, newUser);
+      });
+    }
+  });
+}));
+
+```
+
+Configure the routes to allow us to use Facebook login:
+
+```js
+...
+router.get('/auth/facebook', passport.authenticate('facebook', { scope: 'email' }));
+
+router.get('/auth/facebook/callback', passport.authenticate('facebook', {
+  successRedirect: '/authenticated',
+  failureRedirect: '/'
+}));
+...
+```
+
+In `signup.jade`, add this button to use Facebook Login:
+
+```js
+...
+a(href='/auth/facebook') Sign up with Facebook
+...
+```
+
+You can now login through Facebook!
+
 ## Real-time
 
 ## Conclusion
