@@ -1,0 +1,28 @@
+#! /usr/bin/env node
+
+'use strict'
+
+// Bring in the app
+const app = require('../server/index.js');
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+
+const PORT = process.env.PORT || 5000
+
+io.on('connection', (socket) => {
+  console.log('a user has connected');
+
+  socket.on('color click', function (data) {
+    io.emit('color click', data);
+  });
+
+  // Listen for disconnect event
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
+
+// Listen on the PORT
+http.listen(PORT, function() {
+  console.log(`Listening on ${this.address().port}`);
+});

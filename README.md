@@ -125,6 +125,8 @@ setTimeout(() => {
 console.log('Awesome');
 ```
 
+The callback makes the setTimeout async. You will see that even though the setTimeout is set at **0**, it will get called when the call stack is cleared (after the execution of both console.log) due to the event loop.
+
 ## Getting into the Node Package Manager (NPM)
 
 First off, check your version of your npm:
@@ -1120,6 +1122,274 @@ a(href='/auth/facebook') Sign up with Facebook
 You can now login through Facebook!
 
 ## Real-time
+
+Setting up the real-time app
+
+```js
+{
+  "name": "real-time-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node bin/www"
+  },
+  "author": "Stanley C Yang <stanley@stanleycyang.com> (http://www.stanleycyang.com)",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.0",
+    "compression": "^1.6.1",
+    "cookie-parser": "^1.4.1",
+    "express": "^4.13.4",
+    "jade": "^1.11.0",
+    "mongoose": "^4.4.10",
+    "morgan": "^1.7.0",
+    "socket.io": "^1.4.5"
+  }
+}
+```
+
+In the `bin/www`:
+
+```js
+#! /usr/bin/env node
+
+'use strict'
+
+// Bring in the app
+const app = require('../server/index.js');
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+
+const PORT = process.env.PORT || 5000
+
+io.on('connection', (socket) => {
+  console.log('a user has connected');
+
+  socket.on('color click', function (data) {
+    io.emit('color click', data);
+  });
+
+  // Listen for disconnect event
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
+
+// Listen on the PORT
+http.listen(PORT, function() {
+  console.log(`Listening on ${this.address().port}`);
+});
+```
+In `server/index.js`:
+
+```js
+'use strict'
+
+const express = require('express');
+const app = express();
+const path = require('path');
+const bodyParser = require('body-parser');
+
+// Import routes
+const routes = require('./routes');
+
+// Static assets
+app.use(express.static(path.join(__dirname, '../static'), {
+  maxAge: 86400000
+}))
+
+// Logging
+app.use(require('morgan')('dev'))
+
+// POST parsing
+app.use(bodyParser.urlencoded({
+  extended: true
+}))
+app.use(bodyParser.json());
+
+// Cookie parsing
+app.use(require('cookie-parser')());
+
+// Compression
+app.use(require('compression')({
+  flush: require('zlib').Z_SYNC_FLUSH
+}));
+
+// Views
+app.set('views', path.join(__dirname, '../client/views'));
+app.set('view engine', 'jade');
+
+// Plug our routes into the middleware
+app.use(routes);
+
+/* catch 404s */
+app.use((req, res, next) => {
+  let err = new Error('Not Found');
+  err.static = 404;
+  next(err);
+});
+
+// error handlers
+// development error handler
+// will print stacktrace
+if (app.get('env') === 'development') {
+  app.use((err, req, res, next) => {
+    res.status(err.status || 500);
+    res.render('error', {
+      message: err.message,
+      error: err
+    });
+  });
+}
+
+// production error handler
+// no stacktraces leaked to user
+app.use((err, req, res, next) => {
+  res.status(err.status || 500);
+  res.render('error', {
+    message: err.message,
+    error: {}
+  });
+});
+
+module.exports = app;
+```
+
+In `static/index.js`:
+
+```js
+var socket = io()
+
+var container = document.querySelector('#container');
+
+function randomColor() {
+  var colors = ['#2E9AFE', '#40FF00', '#FFBF00', '#FE2EF7', '#FA5858', '#4000FF', '#FE2E9A', '#CEF6E3', '#04B45F'];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+// Handle the bubbling
+function bubbleUp(data) {
+  var x = data.x,
+      y = data.y,
+      color = data.color
+
+  var bubble = document.createElement('div.bubble');
+
+  // Set the left and top
+  bubble.style.position = 'absolute';
+  bubble.style.left = `${x - 50}px`;
+  bubble.style.top = `${y - 50}px`;
+  bubble.style.backgroundColor = color;
+  bubble.style.padding = '50px';
+  bubble.style.borderRadius = '50%';
+  bubble.style.transition = 'all 1s ease-out';
+  bubble.style.pointerEvents = 'none';
+
+  container.appendChild(bubble);
+
+  setTimeout(function () {
+    bubble.style.padding = '100px';
+    bubble.style.opacity = '0';
+  }, 200);
+
+  bubble.addEventListener('transitionend', function() {
+    bubble.remove();
+  }, false);
+
+}
+
+
+container.onclick = function(e) {
+  var data = {
+    x: e.offsetX,
+    y: e.offsetY,
+    color: randomColor()
+  }
+  
+  // Emit the message
+  socket.emit('color click', data);
+  return false;
+}
+
+socket.on('color click', function (data) {
+  bubbleUp(data);
+});
+```
+
+In `static/styles/index.css`:
+
+```css
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-y: hidden;
+}
+
+body {
+  background: -webkit-linear-gradient(rgba(135, 60, 255, 0.4), rgba(135, 60, 255, 0.0) 80%), -webkit-linear-gradient(-45deg, rgba(120, 155, 255, 0.9) 25%, rgba(255, 160, 65, 0.9) 75%);
+}
+
+#container {
+  width: 900px;
+  height: 500px;
+  background-color: #eee;
+  margin: 0 auto;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.shadow {
+  -moz-box-shadow:    inset 0 0 10px #000000;
+  -webkit-box-shadow: inset 0 0 10px #000000;
+  box-shadow:         inset 0 0 10px #000000;
+}
+```
+
+In `client/views/index.jade`:
+
+```jade
+extends layout
+
+block content
+  div#container.shadow
+  script(src='/socket.io/socket.io.js')
+  script(src='/index.js')
+```
+
+In `client/views/layout.jade`:
+
+```jade
+doctype html
+html
+  head
+    title=title
+    link(rel='stylesheet' href='/styles/index.css')
+  body
+    block content
+```
+
+In `client/views/error.jade`:
+
+```js
+extends layout
+
+block content
+  h1= message
+  h2= error.status
+  pre #{error.stack}
+```
+
+Your real-time app is complete!
 
 ## Conclusion
 
