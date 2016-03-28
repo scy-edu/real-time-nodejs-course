@@ -323,11 +323,13 @@ app.use(require('cookie-parser')());
 app.use(express.static(path.join(__dirname, 'static')));
 
 // Create our first route
-app.use(router.get('/', (req, res, next) => {
+router.get('/', (req, res, next) => {
   res.render('index', {
     title: 'First app'
   });
-}));
+});
+
+app.use('/', router);
 
 app.use((req, res, next) => {
   var err = new Error('Not Found');
@@ -382,13 +384,13 @@ block content
 In `index.js`
 
 ```js
-app.use(router.get('/api/courses', (req, res, next) => {
+router.get('/api/courses', (req, res, next) => {
 	res.json({
 		name: 'Stanley',
 		course: 'NodeJS',
 		description: 'This is going to be fun'
 	});
-}));
+});
 ```
 
 Navigate to http://localhost:3000/api/courses and you'll see that we have created an API!
