@@ -16,7 +16,23 @@ Run these commands to make it work:
 
 [MongoDB Setup with Cloud9](https://docs.c9.io/docs/setting-up-mongodb)
 
-### Topics covered:-	NodeJS-	NPM-	Debugging NodeJS-	Express-	Webpack-	ES2015-	Jade-	MongoDB & Mongoose-	OAuth with Facebook and Twitter-	JWTs (JSON web tokens)-	TDD (test-driven development) with Mocha & Chai-	Callbacks, Promises, and Emitters-	Socket.io### Set up your work environment
+### Topics covered:
+
+-	NodeJS
+-	NPM
+-	Debugging NodeJS
+-	Express
+-	Webpack
+-	ES2015
+-	Jade
+-	MongoDB & Mongoose
+-	OAuth with Facebook and Twitter
+-	JWTs (JSON web tokens)
+-	TDD (test-driven development) with Mocha & Chai
+-	Callbacks, Promises, and Emitters
+-	Socket.io
+
+### Set up your work environment
 
 Follow the guidelines here to setup your Mac OSX envirnment for programming:
 
@@ -570,10 +586,11 @@ $ db.people.remove(INSERT_OBJECTID)
 ### Referencing with Mongo
 
 ```bash
-$ db.person.insert({
+$ db.people.insert({
 	name: 'Stanley Yang',
 	age: 21
 })
+$ var user1 = db.findOne({name: 'Stanley Yang'})
 $ db.phoneBook.insert({
 	people: [
 		user1._id
